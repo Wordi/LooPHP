@@ -24,9 +24,11 @@ class LooPHP_EventLoop_Event
 	public $time;
 	public $callback;
 	
-	function __construct( Closure $callback, $timeout = 0 )
+	function __construct( Closure $callback, $timeout = NULL )
 	{
-		$this->time = microtime( TRUE ) + $timeout;
+		$this->time = is_null( $timeout )
+			? NULL
+			: microtime( TRUE ) + $timeout;
 		$this->callback = $callback;
 	}
 	
@@ -57,44 +59,66 @@ class LooPHP_EventLoop
 {
 	
 	private $_event_heap;
+	private $_event_queue;
 	private $_event_source;
 	
 	function __construct( LooPHP_EventSource $event_source = NULL )
 	{
 		$this->_event_heap = new LooPHP_EventLoop_EventHeap();
+		$this->_event_queue = new SplQueue();
 		$this->_event_source = $event_source !== NULL
 			? $event_source
 			: new LooPHP_EventLoop_NullSource();
 	}
 	
-	function addEvent( Closure $callback, $timeout = 0 )
-	{	
+	function addEvent( Closure $callback, $timeout = NULL )
+	{
 		$event = new LooPHP_EventLoop_Event( $callback, $timeout );
-		$this->_event_heap->insert( $event );
+		if( is_null( $timeout ) ) {
+			$this->_event_queue->enqueue( $event );
+		} else {
+			$this->_event_heap->insert( $event );
+		}
 		return $event;
 	}
 		
 	function processEvents()
 	{
-		while( $this->_event_heap->valid() && $this->_event_heap->top()->time <= microtime( TRUE ) ) {
-			$current_event = $this->_event_heap->extract();
-			$callback = $current_event->callback;
-			if( $callback !== NULL ) //check if the event was cancelled
-				$callback( $this );
+		while( ! $this->_event_queue->isEmpty() || $this->_event_heap->valid() ) {
+			while( ! $this->_event_queue->isEmpty() ) {
+				$current_event = $this->_event_queue->dequeue();
+				$callback = $current_event->callback;
+				if( $callback !== NULL ) //check if the event was cancelled
+					$callback( $this );
+			}
+			while( $this->_event_heap->valid() ) {
+				$current_event = $this->_event_heap->top();
+				if( $current_event->time > microtime( TRUE ) ) {
+					break;
+				}
+				$this->_event_heap->next();
+				$callback = $current_event->callback;
+				if( $callback !== NULL ) //check if the event was cancelled
+					$callback( $this );
+			}
 		}
 	}
 	
 	function run()
 	{
 		while( 1 ) {
-			$time_until_next_event = $this->_event_heap->valid()
-				? $this->_event_heap->top()->time - microtime( TRUE )
-				: NULL;
-			
-			if( $time_until_next_event > 0 or is_null( $time_until_next_event ) ) {
-				$this->_event_source->process( $this, $time_until_next_event );
-			} else {
+			if( count( $this->_event_queue ) > 0 ) {
 				$this->processEvents();
+			} else {
+				$time_until_next_event = $this->_event_heap->valid()
+					? $this->_event_heap->top()->time - microtime( TRUE )
+					: NULL;
+				
+				if( ! is_null( $time_until_next_event ) and $time_until_next_event <= 0 ) {
+					$this->processEvents();
+				} else {
+					$this->_event_source->process( $this, $time_until_next_event );
+				}
 			}
 		}
 	}

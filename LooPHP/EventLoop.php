@@ -107,20 +107,24 @@ class LooPHP_EventLoop
 	function run()
 	{
 		while( 1 ) {
-			if( count( $this->_event_queue ) > 0 ) {
+			$time_until_next_event = $this->getTimeUntilNextEvent();
+			
+			if( ! is_null( $time_until_next_event ) and $time_until_next_event <= 0 ) {
 				$this->processEvents();
 			} else {
-				$time_until_next_event = $this->_event_heap->valid()
-					? $this->_event_heap->top()->time - microtime( TRUE )
-					: NULL;
-				
-				if( ! is_null( $time_until_next_event ) and $time_until_next_event <= 0 ) {
-					$this->processEvents();
-				} else {
-					$this->_event_source->process( $this, $time_until_next_event );
-				}
+				$this->_event_source->process( $this, $time_until_next_event );
 			}
 		}
+	}
+	
+	function getTimeUntilNextEvent()
+	{
+		if( count( $this->_event_queue ) > 0 )
+			return 0;
+		
+		return $this->_event_heap->valid()
+			? max( 0, $this->_event_heap->top()->time - microtime( TRUE ) )
+			: NULL;
 	}
 	
 }

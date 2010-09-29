@@ -84,7 +84,7 @@ class LooPHP_EventLoop
 		
 	function processEvents()
 	{
-		while( ! $this->_event_queue->isEmpty() || $this->_event_heap->valid() ) {
+		do {
 			while( ! $this->_event_queue->isEmpty() ) {
 				$current_event = $this->_event_queue->dequeue();
 				$callback = $current_event->callback;
@@ -101,7 +101,7 @@ class LooPHP_EventLoop
 				if( $callback !== NULL ) //check if the event was cancelled
 					$callback( $this );
 			}
-		}
+		} while( ! $this->_event_queue->isEmpty() );
 	}
 	
 	function run()

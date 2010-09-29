@@ -122,6 +122,9 @@ class LooPHP_EventLoop
 		if( count( $this->_event_queue ) > 0 )
 			return 0;
 		
+		//remove all cancelled events off the top
+		while( $this->_event_heap->valid() && is_null( $this->_event_heap->top()->callback ) ) $this->_event_heap->next();
+		
 		return $this->_event_heap->valid()
 			? max( 0, $this->_event_heap->top()->time - microtime( TRUE ) )
 			: NULL;

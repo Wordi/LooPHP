@@ -48,9 +48,10 @@ class LooPHP_EventLoop_NullSource extends LooPHP_EventSource
 	public function process( LooPHP_EventLoop $event_loop, $timeout )
 	{
 		if( is_null( $timeout ) )
-			exit();
+			return FALSE;
 		
 		usleep( $timeout * 1000000 );
+		return TRUE;
 	}
 	
 }
@@ -112,7 +113,9 @@ class LooPHP_EventLoop
 			if( ! is_null( $time_until_next_event ) and $time_until_next_event <= 0 ) {
 				$this->processEvents();
 			} else {
-				$this->_event_source->process( $this, $time_until_next_event );
+				$process_result = $this->_event_source->process( $this, $time_until_next_event );
+				if( ! is_bool( $process_result ) ) throw new Exception( "process must return a boolean value" );
+				if( ! $process_result ) break;
 			}
 		}
 	}

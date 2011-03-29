@@ -54,6 +54,7 @@ class SocketSourceExample extends LooPHP_EventSource
 				unset( $this->_socket_array[(int)$exception_resource] );
 			}
 		}
+		return TRUE;
 	}
 	
 }

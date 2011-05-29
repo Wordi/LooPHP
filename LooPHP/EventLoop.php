@@ -107,7 +107,7 @@ class LooPHP_EventLoop
 				if( $callback !== NULL ) //check if the event was cancelled
 					$callback( $this );
 			}
-		} while( ! $this->_event_queue->isEmpty() || $this->_event_heap->valid() );
+		} while( ! $this->_event_queue->isEmpty() );
 	}
 	
 	function run()

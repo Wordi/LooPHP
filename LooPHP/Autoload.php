@@ -1,11 +1,11 @@
 <?php
 
-class LooPHP_Autoloader
+class LooPHP_Autoload
 {
 
     static public function register()
     {
-        spl_autoload_register( array( 'LooPHP_Autoloader', 'autoload' ) );
+        spl_autoload_register( array( 'LooPHP_Autoload', 'autoload' ) );
     }
 
     static public function autoload($class)

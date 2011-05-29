@@ -10,7 +10,7 @@ class LooPHP_Autoloader
 
     static public function autoload($class)
     {
-        if( 0 !== strpos($class, 'LooPHP' ) )
+        if( 0 !== strpos($class, 'LooPHP_' ) )
             return false;
 
         require dirname(__FILE__).'/../'.str_replace('_', '/', $class).'.php';

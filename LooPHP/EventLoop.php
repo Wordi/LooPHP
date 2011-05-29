@@ -40,6 +40,11 @@ class LooPHP_EventLoop_Event
 		$this->callback = NULL;
 	}
 	
+	function isCancelled()
+	{
+		return is_null( $this->callback );
+	}
+	
 }
 
 class LooPHP_EventLoop_NullSource extends LooPHP_EventSource
@@ -92,7 +97,7 @@ class LooPHP_EventLoop
 				if( $callback !== NULL ) //check if the event was cancelled
 					$callback( $this );
 			}
-			while( $this->_event_heap->valid() ) {
+			while( $this->_event_heap->valid() && $this->_event_queue->isEmpty() ) {
 				$current_event = $this->_event_heap->top();
 				if( $current_event->time > microtime( TRUE ) ) {
 					break;
@@ -102,31 +107,31 @@ class LooPHP_EventLoop
 				if( $callback !== NULL ) //check if the event was cancelled
 					$callback( $this );
 			}
-		} while( ! $this->_event_queue->isEmpty() );
+		} while( ! $this->_event_queue->isEmpty() || $this->_event_heap->valid() );
 	}
 	
 	function run()
 	{
-		while( 1 ) {
-			$time_until_next_event = $this->getTimeUntilNextEvent();
-			
-			if( ! is_null( $time_until_next_event ) and $time_until_next_event <= 0 ) {
+		$source_is_processing = TRUE;
+		while( ! is_null( $time_until_next_event = $this->getTimeUntilNextEvent() ) || $source_is_processing ) {
+			if( ! is_null( $time_until_next_event ) && $time_until_next_event <= 0 ) {
 				$this->processEvents();
-			} else {
+			} else if( $source_is_processing ) {
 				$process_result = $this->_event_source->process( $this, $time_until_next_event );
 				if( ! is_bool( $process_result ) ) throw new Exception( "process must return a boolean value" );
-				if( ! $process_result ) break;
+				if( ! $process_result )
+					$source_is_processing = FALSE;
 			}
 		}
 	}
 	
 	function getTimeUntilNextEvent()
 	{
-		if( count( $this->_event_queue ) > 0 )
+		if( ! $this->_event_queue->isEmpty() )
 			return 0;
 		
 		//remove all cancelled events off the top
-		while( $this->_event_heap->valid() && is_null( $this->_event_heap->top()->callback ) ) $this->_event_heap->next();
+		while( $this->_event_heap->valid() && $this->_event_heap->top()->isCancelled() ) $this->_event_heap->next();
 		
 		return $this->_event_heap->valid()
 			? max( 0, $this->_event_heap->top()->time - microtime( TRUE ) )

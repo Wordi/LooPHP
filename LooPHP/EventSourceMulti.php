@@ -1,6 +1,6 @@
 <?php
 
-class LooPHP_EventSourceMulti extends LooPHP_EventSource
+class LooPHP_EventSourceMulti implements LooPHP_EventSource
 {
 	
 	private $_listen_socket;

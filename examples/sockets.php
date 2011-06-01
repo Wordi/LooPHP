@@ -3,7 +3,7 @@
 require( dirname( dirname( __FILE__ ) )."/LooPHP/Autoload.php" );
 LooPHP_Autoloader::register();
 
-class SocketSourceExample extends LooPHP_EventSource
+class SocketSourceExample implements LooPHP_EventSource
 {
 	
 	private $_listen_socket;

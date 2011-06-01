@@ -47,7 +47,7 @@ class LooPHP_EventLoop_Event
 	
 }
 
-class LooPHP_EventLoop_NullSource extends LooPHP_EventSource
+class LooPHP_EventLoop_NullSource implements LooPHP_EventSource
 {
 	
 	public function process( LooPHP_EventLoop $event_loop, $timeout )

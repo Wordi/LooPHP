@@ -34,7 +34,7 @@ class LooPHP_EventLoop_Event
 	
 	function cancel()
 	{
-		if( $this->callback === NULL )
+		if( $this->isCancelled() )
 			throw new Exception( "Already cancelled" );
 		
 		$this->callback = NULL;

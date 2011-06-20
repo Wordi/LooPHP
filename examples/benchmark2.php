@@ -1,7 +1,7 @@
 <?php
 
 require( dirname( dirname( __FILE__ ) )."/LooPHP/Autoload.php" );
-LooPHP_Autoloader::register();
+LooPHP_Autoload::register();
 
 $loop = new LooPHP_EventLoop();
 

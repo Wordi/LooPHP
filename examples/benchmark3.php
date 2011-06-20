@@ -5,13 +5,10 @@ LooPHP_Autoload::register();
 
 $loop = new LooPHP_EventLoop();
 
-$add_event = function( $loop ) use ( &$add_event ) {
-	static $i = 0;
-	if( ++$i >= 100000 ) return;
-	$loop->addEvent( $add_event );
-};
+$target_time = microtime( TRUE ) + 0;
 
-$add_event( $loop );
+for( $i = 0; $i < 100000; $i++ )
+	$loop->addEvent( function(){;}, $target_time - microtime( TRUE ) );
 
 $loop->run();
 
